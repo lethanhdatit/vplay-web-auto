@@ -1,0 +1,111 @@
+import puppeteer from "puppeteer";
+
+/**
+ * Step 1: Get Authentication Headers
+ * Logs in and captures authorization headers from API requests
+ */
+export async function getAuthHeaders(stepConfig, globalConfig) {
+  const { 
+    browser: browserConfig,
+    startUrl,
+    loginButtonSelector,
+    credentials,
+    loginSelectors,
+    waitAfterLogin,
+    targetApiUrls
+  } = globalConfig;
+
+  const browser = await puppeteer.launch(browserConfig);
+  const page = await browser.newPage();
+  let foundTokens = [];
+
+  try {
+    // Monitor all requests to capture Authorization header
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      const url = request.url();
+
+      // Detect API calls
+      if (targetApiUrls.some(api => url.includes(api))) {
+        const headers = request.headers();
+        if (headers["authorization"]) {
+          foundTokens.push({
+            apiUrl: url,
+            header: {
+              "authorization": headers["authorization"],
+              "x-core-client-id": headers["x-core-client-id"],
+              "x-core-api-version": "v2_onlive", // headers["x-core-api-version"],
+              "user-agent": headers["user-agent"],
+            }
+          });
+          console.log("🔐 [FOUND TOKEN] =>", headers["authorization"]);
+        }
+      }
+
+      request.continue();
+    });
+
+    console.log("▶ GO TO START:", startUrl);
+    await page.goto(startUrl, { waitUntil: "networkidle2" });
+
+    // Click login button with retry
+    console.log("🔎 WAIT FOR LOGIN BUTTON...");
+    await clickLoginButtonWithRetry(page, loginButtonSelector);
+    await clickLoginButtonWithRetry(page, loginButtonSelector);
+
+    console.log("👉 LOGIN BUTTON CLICKED – WAIT FOR REDIRECT");
+
+    // Fill login form
+    await page.waitForSelector(loginSelectors.username);
+    await page.type(loginSelectors.username, credentials.username);
+
+    await page.waitForSelector(loginSelectors.password);
+    await page.type(loginSelectors.password, credentials.password);
+
+    if (loginSelectors.rememberMe) {
+      try {
+        await page.click(loginSelectors.rememberMe);
+      } catch { }
+    }
+
+    await page.click(loginSelectors.submit);
+    console.log("🔐 SUBMIT LOGIN");
+
+    // Follow multi-step redirect chain
+    await page.waitForNavigation({ waitUntil: "networkidle2" });
+    await new Promise(r => setTimeout(r, waitAfterLogin));
+
+    console.log("➡ FINAL LANDING PAGE:", page.url());
+
+    if (foundTokens.length === 0) {
+      throw new Error("❌ No authorization headers found");
+    }
+
+    // Return only the first token (most recent)
+    const result = foundTokens[0].header;
+    console.log("✔ Authentication headers captured successfully");
+    
+    return result;
+
+  } finally {
+    await browser.close();
+  }
+}
+
+/**
+ * Retry click button
+ */
+async function clickLoginButtonWithRetry(page, selector, maxRetry = 5) {
+  for (let i = 0; i < maxRetry; i++) {
+    try {
+      await page.waitForSelector(selector, { timeout: 3000 });
+      await page.click(selector);
+      console.log(`✔ LOGIN BUTTON CLICKED (attempt ${i + 1})`);
+      return true;
+    } catch (err) {
+      console.log(`⚠ Cannot click login button, retrying (${i + 1}/${maxRetry})...`);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  throw new Error("❌ Failed to click login button after multiple attempts");
+}
