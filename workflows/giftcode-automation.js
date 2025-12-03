@@ -1,4 +1,4 @@
-const CONFIG = {
+export const CONFIG = {
     appId: "33",
 }
 
@@ -111,7 +111,7 @@ export default {
                 serverName: "${step2.name}",
                 characterId: "${step3.characterId}",
                 characterName: "${step3.character}",
-                code: "${item}",
+                code: "${step4.item}",
             },
             items: [
                 "VIP6886",
@@ -136,7 +136,8 @@ export default {
                 "LUONGTHAO",
                 "TRUYENKY99",
                 "PAGE10KLIKE",
-                "PAGE5KLIKE"
+                "PAGE5KLIKE",
+                "LIVESTREAM66"
             ],
             delayBetweenCalls: 800,
             parallel: false, // Sequential execution recommended for gift codes

@@ -141,7 +141,9 @@ async function executeBatchItem(item, index, stepConfig, previousStepOutputs, ap
     // Create context for this batch item
     const itemContext = {
         ...previousStepOutputs,
-        item,
+        step4:{
+            item: item
+        },
         itemIndex: index,
     };
 
@@ -150,7 +152,8 @@ async function executeBatchItem(item, index, stepConfig, previousStepOutputs, ap
     const finalHeaders = interpolateObject(headers, itemContext);
     const finalBody = bodyTemplate ? interpolateObject(bodyTemplate, itemContext) : null;
 
-    console.log(`  [${index + 1}] Sending request...`);
+    console.log(finalUrl);
+    console.log(finalBody);
 
     const options = {
         method,
@@ -169,7 +172,7 @@ async function executeBatchItem(item, index, stepConfig, previousStepOutputs, ap
 
     if (!response.ok) {
         const data = await response.json();
-        console.error(`HTTP ${response.status}: ${response.statusText} : ${JSON.stringify(data)}`);
+        console.error(data);
     } else {
         const data = await response.json();
         return data;
@@ -266,4 +269,43 @@ function getNestedValue(obj, path) {
         }
         return current[key];
     }, obj);
+}
+
+/**
+ * Execute a single step independently
+ * Used for individual step execution in web UI
+ */
+export async function executeSingleStep(stepIndex, workflow, previousStepOutputs, globalConfig) {
+    const step = workflow[stepIndex];
+    const stepNum = stepIndex + 1;
+    const stepKey = `step${stepNum}`;
+
+    console.log(`\n📍 Step ${stepNum}: ${step.name}`);
+    console.log("-".repeat(40));
+
+    if (!step.enabled) {
+        console.log(`⊘ Step disabled, skipping...`);
+        return null;
+    }
+
+    let output;
+
+    if (step.type === "getAuthHeaders") {
+        output = await getAuthHeaders(step, globalConfig);
+    } else if (step.type === "apiCall") {
+        output = await apiCall(step, previousStepOutputs);
+    } else if (step.type === "batch") {
+        output = await executeBatch(step, previousStepOutputs);
+    } else if (step.type === "custom") {
+        if (typeof step.execute !== "function") {
+            throw new Error(`Custom step must have an execute function`);
+        }
+        output = await step.execute(step, previousStepOutputs);
+    } else {
+        throw new Error(`Unknown step type: ${step.type}`);
+    }
+
+    console.log(`✔ Step ${stepNum} completed successfully`);
+
+    return output;
 }
