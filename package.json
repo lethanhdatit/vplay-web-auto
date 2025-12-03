@@ -1,0 +1,8 @@
+{
+  "name": "auth-header-inspection",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "puppeteer": "^24.1.1"
+  }
+}
