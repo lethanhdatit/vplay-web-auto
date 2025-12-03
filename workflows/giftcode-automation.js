@@ -29,7 +29,7 @@ export default {
         "oidc-service/oauth2/me"
     ],
 
-    waitAfterLogin: 2000,
+    waitAfterLogin: 1000,
 
     // ===== WORKFLOW STEPS =====
     workflow: [
