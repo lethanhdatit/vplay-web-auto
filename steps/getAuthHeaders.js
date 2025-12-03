@@ -15,7 +15,23 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     targetApiUrls
   } = globalConfig;
 
-  const browser = await puppeteer.launch(browserConfig);
+  // Ensure Puppeteer can run inside containers (run as root) by adding
+  // recommended flags. Merge any user-provided args with safe defaults.
+  const defaultArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--no-zygote',
+    '--single-process'
+  ];
+
+  const launchArgs = (browserConfig && browserConfig.args) ?
+    [...browserConfig.args, ...defaultArgs] : defaultArgs;
+
+  const launchOptions = Object.assign({}, browserConfig || {}, { args: launchArgs });
+
+  const browser = await puppeteer.launch(launchOptions);
   const page = await browser.newPage();
   let foundTokens = [];
 
