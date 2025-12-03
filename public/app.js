@@ -376,7 +376,7 @@ function setupEventListeners() {
     setTimeout(async () => {
         const outputs = await getStepOutputs();
         updateOutputs(outputs);
-    }, 150);
+    }, 500);
 
     logInfo('UI ready. Configure and run workflow.');
 }
