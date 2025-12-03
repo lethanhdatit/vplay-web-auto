@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 // Store for all console messages
 let consoleBuffer = [];
-const MAX_BUFFER_SIZE = 1000; // Keep last 1000 lines
+const MAX_BUFFER_SIZE = 10000; // Keep last 1000 lines
 let isSetup = false; // Prevent multiple setups
 
 /**
