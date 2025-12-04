@@ -5,7 +5,7 @@ import puppeteer from "puppeteer";
  * Logs in and captures authorization headers from API requests
  */
 export async function getAuthHeaders(stepConfig, globalConfig) {
-  const { 
+  const {
     browser: browserConfig,
     startUrl,
     loginButtonSelector,
@@ -71,8 +71,12 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     await page.click(loginSelectors.submit);
     console.log("🔐 SUBMIT LOGIN");
 
-    // Follow multi-step redirect chain
-    await page.waitForNavigation({ waitUntil: "networkidle2" });
+    await new Promise(r => setTimeout(r, 2000));
+
+    if (foundTokens.length !== 0) {
+      return foundTokens[0].header;
+    }
+
     await new Promise(r => setTimeout(r, waitAfterLogin));
 
     console.log("➡ FINAL LANDING PAGE:", page.url());
@@ -84,7 +88,7 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     // Return only the first token (most recent)
     const result = foundTokens[0].header;
     console.log("✔ Authentication headers captured successfully");
-    
+
     return result;
 
   } finally {
