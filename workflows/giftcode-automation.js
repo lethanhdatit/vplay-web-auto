@@ -143,5 +143,15 @@ export default {
             parallel: false, // Sequential execution recommended for gift codes
             delayAfter: 1000,
         },
+
+        {
+            type: "registerAccounts",
+            name: "Register Accounts",
+            enabled: true,
+            onError: "stop",
+            delayAfter: 1000,
+            newAccountFrom: 10,
+            newAccountTo: 100
+        },
     ],
 };
