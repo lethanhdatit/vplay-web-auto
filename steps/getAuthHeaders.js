@@ -1,4 +1,14 @@
 import puppeteer from "puppeteer";
+// Ensure Puppeteer can run inside containers (run as root) by adding
+// recommended flags. Merge any user-provided args with safe defaults.
+const defaultArgs = [
+  "--no-sandbox",
+  "--disable-setuid-sandbox",
+  "--disable-dev-shm-usage",
+  "--disable-gpu",
+  "--no-zygote",
+  "--single-process",
+];
 
 export async function registerAccounts(stepConfig, globalConfig) {
   const {
@@ -16,12 +26,21 @@ export async function registerAccounts(stepConfig, globalConfig) {
   const password = "123456789";
   let results = [];
 
+  const launchArgs =
+    browserConfig && browserConfig.args
+      ? [...browserConfig.args, ...defaultArgs]
+      : defaultArgs;
+
+  const launchOptions = Object.assign({}, browserConfig || {}, {
+    args: launchArgs,
+  });
+
   for (let i = Number(newAccountFrom); i <= Number(newAccountTo); i++) {
     const usn = `${username}${i}`;
 
     console.log(`Running: ${usn}`);
 
-    const browser = await puppeteer.launch(browserConfig);
+    const browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
 
     let foundTokens = [];
@@ -115,7 +134,16 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     targetApiUrls,
   } = globalConfig;
 
-  const browser = await puppeteer.launch(browserConfig);
+  const launchArgs =
+    browserConfig && browserConfig.args
+      ? [...browserConfig.args, ...defaultArgs]
+      : defaultArgs;
+
+  const launchOptions = Object.assign({}, browserConfig || {}, {
+    args: launchArgs,
+  });
+
+  const browser = await puppeteer.launch(launchOptions);
   const page = await browser.newPage();
   let foundTokens = [];
 
