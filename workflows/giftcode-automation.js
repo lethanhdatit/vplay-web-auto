@@ -150,7 +150,7 @@ export default {
             enabled: true,
             onError: "stop",
             delayAfter: 1000,
-            newAccountFrom: 26,
+            newAccountFrom: 30,
             newAccountTo: 100
         },
     ],

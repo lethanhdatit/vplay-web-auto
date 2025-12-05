@@ -97,68 +97,39 @@ export async function registerAccounts(stepConfig, globalConfig) {
       await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
       console.log("🔐 SUBMIT 1");
 
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 2000));
 
-      if (foundTokens.length !== 0) {
-        results.push({
-          username: usn,
-          password: password,
-        });
-        console.log(`OK, ${usn}`);
-      } else {
-        console.log(`NOT OK, ${usn}`);
+      async function tryToPassCapcha(count, delay1, delay2, delay3) {
+        if (foundTokens.length === 0) {
+
+          console.log(`tryToPassCapcha ${count}`);
+          await page.waitForSelector("#reg_password");
+          await page.type("#reg_password", password);
+
+          await new Promise((r) => setTimeout(r, delay1));
+
+          await clickWithRetry(page, "#reg_agreePolicy");
+          await clickWithRetry(page, "#reg_agreePolicy");
+
+          await new Promise((r) => setTimeout(r, delay2));
+
+          await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
+          console.log(`🔐 SUBMIT ${count}`);
+
+          await new Promise((r) => setTimeout(r, delay3));
+        }
       }
 
-      await page.waitForSelector("#reg_password");
-      await page.type("#reg_password", password);
+      let limit = 10;
+      let count = 1;
 
-      await new Promise((r) => setTimeout(r, 200));
-
-      await clickWithRetry(page, "#reg_agreePolicy");
-      await clickWithRetry(page, "#reg_agreePolicy");
-
-      await new Promise((r) => setTimeout(r, 500));
-
-      await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
-      console.log("🔐 SUBMIT 2");
-
-      await new Promise((r) => setTimeout(r, 1000));
-
-      if (foundTokens.length !== 0) {
-        results.push({
-          username: usn,
-          password: password,
-        });
-        console.log(`OK, ${usn}`);
-      } else {
-        console.log(`NOT OK, ${usn}`);
+      while (foundTokens.length === 0 && limit > 0) {
+        await tryToPassCapcha(count, 600, 500, 3000);
+        count++;
+        limit--;
       }
-
-      await page.waitForSelector("#reg_password");
-      await page.type("#reg_password", password);
-
-      await new Promise((r) => setTimeout(r, 250));
-
-      await clickWithRetry(page, "#reg_agreePolicy");
-      await clickWithRetry(page, "#reg_agreePolicy");
-
-      await new Promise((r) => setTimeout(r, 800));
-
-      await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
-      console.log("🔐 SUBMIT 3");
-
-      await new Promise((r) => setTimeout(r, 1000));
-
-      if (foundTokens.length !== 0) {
-        results.push({
-          username: usn,
-          password: password,
-        });
-        console.log(`OK, ${usn}`);
-      } else {
-        console.log(`NOT OK, ${usn}`);
-      }
-
+    } catch (ex) {
+      console.error(`Error`, ex);
     } finally {
       await new Promise((r) => setTimeout(r, 3000));
       if (foundTokens.length !== 0) {
@@ -168,7 +139,7 @@ export async function registerAccounts(stepConfig, globalConfig) {
         });
         console.log(`OK, ${usn}`);
       } else {
-        console.log(`NOT OK, ${usn}`);
+        console.error(`NOT OK, ${usn}`);
       }
       await browser.close();
     }
