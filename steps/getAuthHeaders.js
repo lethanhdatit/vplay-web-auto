@@ -97,14 +97,68 @@ export async function registerAccounts(stepConfig, globalConfig) {
       await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
       console.log("🔐 SUBMIT 1");
 
+      await new Promise((r) => setTimeout(r, 800));
+
+      if (foundTokens.length !== 0) {
+        results.push({
+          username: usn,
+          password: password,
+        });
+        console.log(`OK, ${usn}`);
+      } else {
+        console.log(`NOT OK, ${usn}`);
+      }
+
       await page.waitForSelector("#reg_password");
       await page.type("#reg_password", password);
 
+      await new Promise((r) => setTimeout(r, 200));
+
       await clickWithRetry(page, "#reg_agreePolicy");
       await clickWithRetry(page, "#reg_agreePolicy");
 
+      await new Promise((r) => setTimeout(r, 500));
+
       await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
       console.log("🔐 SUBMIT 2");
+
+      await new Promise((r) => setTimeout(r, 1000));
+
+      if (foundTokens.length !== 0) {
+        results.push({
+          username: usn,
+          password: password,
+        });
+        console.log(`OK, ${usn}`);
+      } else {
+        console.log(`NOT OK, ${usn}`);
+      }
+
+      await page.waitForSelector("#reg_password");
+      await page.type("#reg_password", password);
+
+      await new Promise((r) => setTimeout(r, 250));
+
+      await clickWithRetry(page, "#reg_agreePolicy");
+      await clickWithRetry(page, "#reg_agreePolicy");
+
+      await new Promise((r) => setTimeout(r, 800));
+
+      await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
+      console.log("🔐 SUBMIT 3");
+
+      await new Promise((r) => setTimeout(r, 1000));
+
+      if (foundTokens.length !== 0) {
+        results.push({
+          username: usn,
+          password: password,
+        });
+        console.log(`OK, ${usn}`);
+      } else {
+        console.log(`NOT OK, ${usn}`);
+      }
+
     } finally {
       await new Promise((r) => setTimeout(r, 3000));
       if (foundTokens.length !== 0) {
@@ -119,7 +173,7 @@ export async function registerAccounts(stepConfig, globalConfig) {
       await browser.close();
     }
 
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 3000));
   }
 
   return results;
