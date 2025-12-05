@@ -1,5 +1,105 @@
 import puppeteer from "puppeteer";
 
+export async function registerAccounts(stepConfig, globalConfig) {
+  const {
+    browser: browserConfig,
+    startUrl,
+    loginButtonSelector,
+  } = globalConfig;
+
+  const { newAccountFrom, newAccountTo } = stepConfig;
+
+  console.log("newAccountFrom:", newAccountFrom);
+  console.log("newAccountTo:", newAccountTo);
+
+  const username = "ltdltd";
+  const password = "123456789";
+  let results = [];
+
+  for (let i = Number(newAccountFrom); i <= Number(newAccountTo); i++) {
+    const usn = `${username}${i}`;
+
+    console.log(`Running: ${usn}`);
+
+    const browser = await puppeteer.launch(browserConfig);
+    const page = await browser.newPage();
+
+    let foundTokens = [];
+
+    try {
+      // Monitor all requests to capture Authorization header
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        const url = request.url();
+
+        const headers = request.headers();
+        if (headers["authorization"]) {
+          foundTokens.push({
+            apiUrl: url,
+            header: {
+              authorization: headers["authorization"],
+              "x-core-client-id": headers["x-core-client-id"],
+              "x-core-api-version": "v2_onlive", // headers["x-core-api-version"],
+              "user-agent": headers["user-agent"],
+            },
+          });
+          console.log("🔐 [FOUND TOKEN] =>", headers["authorization"]);
+        }
+
+        request.continue();
+      });
+
+      console.log("▶ GO TO START:", startUrl);
+      await page.goto(startUrl, { waitUntil: "networkidle2" });
+
+      // Click login button with retry
+      console.log("🔎 WAIT FOR LOGIN BUTTON...");
+      await clickWithRetry(page, loginButtonSelector);
+      await clickWithRetry(page, loginButtonSelector);
+
+      console.log("👉 LOGIN BUTTON CLICKED – WAIT FOR REDIRECT");
+
+      // Fill login form
+      await page.waitForSelector("#showRegisterBtn");
+      await clickWithRetry(page, "#showRegisterBtn");
+
+      await page.waitForSelector("#reg_uername");
+      await page.type("#reg_uername", usn);
+
+      await page.waitForSelector("#reg_password");
+      await page.type("#reg_password", password);
+
+      await page.waitForSelector("#reg_rePassword");
+      await page.type("#reg_rePassword", password);
+
+      await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
+      console.log("🔐 SUBMIT 1");
+
+      await page.waitForSelector("#reg_password");
+      await page.type("#reg_password", password);
+
+      await clickWithRetry(page, "#reg_agreePolicy");
+      await clickWithRetry(page, "#reg_agreePolicy");
+
+      await clickWithRetry(page, "button.btn.btn-primary.dangnhap");
+      console.log("🔐 SUBMIT 2");
+    } finally {
+      await new Promise((r) => setTimeout(r, 3000));
+      if (foundTokens.length !== 0) {
+        results.push({
+          username: usn,
+          password: password,
+        });
+      }
+      await browser.close();
+    }
+
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  return results;
+}
+
 /**
  * Step 1: Get Authentication Headers
  * Logs in and captures authorization headers from API requests
@@ -12,7 +112,7 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     credentials,
     loginSelectors,
     waitAfterLogin,
-    targetApiUrls
+    targetApiUrls,
   } = globalConfig;
 
   const browser = await puppeteer.launch(browserConfig);
@@ -26,17 +126,17 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
       const url = request.url();
 
       // Detect API calls
-      if (targetApiUrls.some(api => url.includes(api))) {
+      if (targetApiUrls.some((api) => url.includes(api))) {
         const headers = request.headers();
         if (headers["authorization"]) {
           foundTokens.push({
             apiUrl: url,
             header: {
-              "authorization": headers["authorization"],
+              authorization: headers["authorization"],
               "x-core-client-id": headers["x-core-client-id"],
               "x-core-api-version": "v2_onlive", // headers["x-core-api-version"],
               "user-agent": headers["user-agent"],
-            }
+            },
           });
           console.log("🔐 [FOUND TOKEN] =>", headers["authorization"]);
         }
@@ -50,8 +150,8 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
 
     // Click login button with retry
     console.log("🔎 WAIT FOR LOGIN BUTTON...");
-    await clickLoginButtonWithRetry(page, loginButtonSelector);
-    await clickLoginButtonWithRetry(page, loginButtonSelector);
+    await clickWithRetry(page, loginButtonSelector);
+    await clickWithRetry(page, loginButtonSelector);
 
     console.log("👉 LOGIN BUTTON CLICKED – WAIT FOR REDIRECT");
 
@@ -65,19 +165,19 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     if (loginSelectors.rememberMe) {
       try {
         await page.click(loginSelectors.rememberMe);
-      } catch { }
+      } catch {}
     }
 
     await page.click(loginSelectors.submit);
     console.log("🔐 SUBMIT LOGIN");
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 2000));
 
     if (foundTokens.length !== 0) {
       return foundTokens[0].header;
     }
 
-    await new Promise(r => setTimeout(r, waitAfterLogin));
+    await new Promise((r) => setTimeout(r, waitAfterLogin));
 
     console.log("➡ FINAL LANDING PAGE:", page.url());
 
@@ -90,7 +190,6 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     console.log("✔ Authentication headers captured successfully");
 
     return result;
-
   } finally {
     await browser.close();
   }
@@ -99,17 +198,20 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
 /**
  * Retry click button
  */
-async function clickLoginButtonWithRetry(page, selector, maxRetry = 5) {
+async function clickWithRetry(page, selector, maxRetry = 5) {
   for (let i = 0; i < maxRetry; i++) {
     try {
       await page.waitForSelector(selector, { timeout: 3000 });
       await page.click(selector);
-      console.log(`✔ LOGIN BUTTON CLICKED (attempt ${i + 1})`);
+      console.log(`${selector} CLICKED (attempt ${i + 1})`);
       return true;
     } catch (err) {
-      console.log(`⚠ Cannot click login button, retrying (${i + 1}/${maxRetry})...`);
-      await new Promise(r => setTimeout(r, 1000));
+      console.error(
+        `⚠ Cannot click ${selector}, retrying (${i + 1}/${maxRetry})...`,
+        err
+      );
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
-  throw new Error("❌ Failed to click login button after multiple attempts");
+  throw new Error(`❌ Failed to click ${selector} after multiple attempts`);
 }

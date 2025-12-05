@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./getAuthHeaders.js";
+import { getAuthHeaders, registerAccounts } from "./getAuthHeaders.js";
 import { apiCall } from "./apiCall.js";
 
 /**
@@ -289,8 +289,10 @@ export async function executeSingleStep(stepIndex, workflow, previousStepOutputs
     }
 
     let output;
-
-    if (step.type === "getAuthHeaders") {
+    
+    if (step.type === "registerAccounts") {
+        output = await registerAccounts(step, globalConfig);
+    }else if (step.type === "getAuthHeaders") {
         output = await getAuthHeaders(step, globalConfig);
     } else if (step.type === "apiCall") {
         output = await apiCall(step, previousStepOutputs);

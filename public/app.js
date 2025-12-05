@@ -23,6 +23,8 @@ async function loadConfig() {
         document.getElementById('appId').value = currentConfig.appId;
         document.getElementById('username').value = currentConfig.credentials.username;
         document.getElementById('password').value = currentConfig.credentials.password;
+        document.getElementById('newAccountFrom').value = currentConfig.newAccountFrom;
+        document.getElementById('newAccountTo').value = currentConfig.newAccountTo;
         
         updateCodesList(currentConfig.items);
     } catch (error) {
@@ -42,6 +44,8 @@ async function saveConfig() {
             password: document.getElementById('password').value,
         },
         items: codes,
+        newAccountFrom: document.getElementById('newAccountFrom').value,
+        newAccountTo: document.getElementById('newAccountTo').value,
     };
 
     try {
@@ -91,7 +95,7 @@ async function runStep(stepNum) {
     // Validate dependencies
     const stepOutputs = await getStepOutputs();
     
-    if (stepNum > 1 && !stepOutputs[`step${stepNum - 1}`]) {
+    if (stepNum !== 5 && stepNum > 1 && !stepOutputs[`step${stepNum - 1}`]) {
         const deps = Array.from({length: stepNum - 1}, (_, i) => i + 1);
         logError(`Step ${stepNum} requires previous steps to be completed first: ${deps.join(', ')}`);
         return;

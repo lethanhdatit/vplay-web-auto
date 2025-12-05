@@ -33,6 +33,8 @@ app.get('/api/config', (req, res) => {
     appId: CONFIG.appId,
     credentials: workflowConfig.credentials,
     items: workflowConfig.workflow[3].items,
+    newAccountFrom: workflowConfig.workflow[4].newAccountFrom,
+    newAccountTo: workflowConfig.workflow[4].newAccountTo,
   });
 });
 
@@ -40,7 +42,7 @@ app.get('/api/config', (req, res) => {
  * POST /api/config - Update configuration
  */
 app.post('/api/config', (req, res) => {
-  const { appId, credentials, items } = req.body;
+  const { appId, credentials, items, newAccountFrom, newAccountTo } = req.body;
 
   if (appId !== undefined) {
     workflowConfig.appId = appId;
@@ -58,6 +60,9 @@ app.post('/api/config', (req, res) => {
     if (credentials.username) workflowConfig.credentials.username = credentials.username;
     if (credentials.password) workflowConfig.credentials.password = credentials.password;
   }
+
+  if (newAccountFrom) workflowConfig.workflow[4].newAccountFrom = newAccountFrom;
+  if (newAccountTo) workflowConfig.workflow[4].newAccountTo = newAccountTo;
 
   if (items && Array.isArray(items)) {
     // Validate no duplicates
