@@ -1,14 +1,17 @@
 import puppeteer from "puppeteer";
 // Ensure Puppeteer can run inside containers (run as root) by adding
 // recommended flags. Merge any user-provided args with safe defaults.
-const defaultArgs = [
-  "--no-sandbox",
-  "--disable-setuid-sandbox",
-  "--disable-dev-shm-usage",
-  "--disable-gpu",
-  "--no-zygote",
-  "--single-process",
-];
+const defaultArgs =
+  process.env.NODE_ENV === "production"
+    ? [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-zygote",
+        "--single-process",
+      ]
+    : [];
 
 export async function registerAccounts(stepConfig, globalConfig) {
   const {
@@ -156,21 +159,18 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     page.on("request", (request) => {
       const url = request.url();
 
-      // Detect API calls
-      if (targetApiUrls.some((api) => url.includes(api))) {
-        const headers = request.headers();
-        if (headers["authorization"]) {
-          foundTokens.push({
-            apiUrl: url,
-            header: {
-              authorization: headers["authorization"],
-              "x-core-client-id": headers["x-core-client-id"],
-              "x-core-api-version": "v2_onlive", // headers["x-core-api-version"],
-              "user-agent": headers["user-agent"],
-            },
-          });
-          console.log("🔐 [FOUND TOKEN] =>", headers["authorization"]);
-        }
+      const headers = request.headers();
+      if (headers["authorization"]) {
+        foundTokens.push({
+          apiUrl: url,
+          header: {
+            authorization: headers["authorization"],
+            "x-core-client-id": headers["x-core-client-id"],
+            "x-core-api-version": "v2_onlive", // headers["x-core-api-version"],
+            "user-agent": headers["user-agent"],
+          },
+        });
+        console.log("🔐 [FOUND TOKEN] =>", headers["authorization"]);
       }
 
       request.continue();
@@ -202,7 +202,7 @@ export async function getAuthHeaders(stepConfig, globalConfig) {
     await page.click(loginSelectors.submit);
     console.log("🔐 SUBMIT LOGIN");
 
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 3000));
 
     if (foundTokens.length !== 0) {
       return foundTokens[0].header;
