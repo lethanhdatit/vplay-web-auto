@@ -5,7 +5,7 @@ export const CONFIG = {
 export default {
     // ===== GLOBAL CONFIG =====
     browser: {
-        headless: false,
+        headless: process.env.NODE_ENV === "production",
         slowMo: 50
     },
 
