@@ -109,6 +109,9 @@ export async function registerAccounts(stepConfig, globalConfig) {
           username: usn,
           password: password,
         });
+        console.log(`OK, ${usn}`);
+      } else {
+        console.log(`NOT OK, ${usn}`);
       }
       await browser.close();
     }
