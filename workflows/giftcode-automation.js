@@ -5,7 +5,7 @@ export const CONFIG = {
 export default {
     // ===== GLOBAL CONFIG =====
     browser: {
-        headless: true,
+        headless: false,
         slowMo: 50
     },
 
@@ -150,7 +150,7 @@ export default {
             enabled: true,
             onError: "stop",
             delayAfter: 1000,
-            newAccountFrom: 10,
+            newAccountFrom: 26,
             newAccountTo: 100
         },
     ],
