@@ -16,6 +16,13 @@ export async function executeWorkflow(workflow, globalConfig) {
 
     for (let i = 0; i < workflow.length; i++) {
         const step = workflow[i];
+
+        if(step.skipOnWF){
+            console.log(`\n⏭ Step ${i + 1}: ${step.name} - Skipped due to skipOnWF flag`);
+            results[`step${i + 1}`] = null;
+            continue;
+        }
+
         const stepNum = i + 1;
         const stepKey = `step${stepNum}`;
 

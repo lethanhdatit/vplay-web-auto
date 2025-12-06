@@ -148,10 +148,11 @@ export default {
             type: "registerAccounts",
             name: "Register Accounts",
             enabled: true,
+            skipOnWF: true,
             onError: "stop",
             delayAfter: 1000,
-            newAccountFrom: 30,
-            newAccountTo: 100
+            newAccountFrom: 41,
+            newAccountTo: 50
         },
     ],
 };
