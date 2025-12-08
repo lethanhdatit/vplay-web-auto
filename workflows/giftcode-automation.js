@@ -137,7 +137,9 @@ export default {
                 "TRUYENKY99",
                 "PAGE10KLIKE",
                 "PAGE5KLIKE",
-                "LIVESTREAM66"
+                "LIVESTREAM66",
+                "LIVESTREAM88",
+                "LIVESTREAM99",
             ],
             delayBetweenCalls: 800,
             parallel: false, // Sequential execution recommended for gift codes
